@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEVIXA 2k26 – M A M C E T</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+:root {
+  --red:#ec240e; --deep-red:#7b1010; --blood:#3d0000;
+  --gold:#d4a01a; --light-gold:#f0c840;
+  --white:#f5f0e8; --dark:#0a0000; --grey:#aaa;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:#0a0000;color:var(--white);font-family:'Cinzel',serif;overflow-x:hidden;}
+
+/* noise grain */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:.18;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#0a0000;}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+/* ── HERO ── */
+#hero{
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;overflow:hidden;padding:20px;background:#050000;
+}
+
+/* THE CANVAS LIVES INSIDE #hero, z=0 */
+#bgCanvas{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;
+}
+
+/* overlay darkens bottom + adds red tint */
+.video-overlay{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(135deg,rgba(192,57,43,.18) 0%,transparent 55%),
+    linear-gradient(to bottom,rgba(5,0,0,.25) 0%,rgba(5,0,0,.05) 35%,rgba(5,0,0,.55) 80%,rgba(5,0,0,1) 100%);
+}
+
+/* grid lines */
+.hero-lines{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(192,57,43,.06) 60px),
+    repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(192,57,43,.06) 60px);
+  animation:lineShift 30s linear infinite;
+}
+@keyframes lineShift{0%{transform:translate(0,0);}100%{transform:translate(60px,60px);}}
+
+/* scanlines */
+.scanlines{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(192,57,43,.025) 0px,transparent 2px);
+  animation:scanMove 8s linear infinite;
+}
+@keyframes scanMove{0%{transform:translateY(0);}100%{transform:translateY(100px);}}
+
+/* vignette */
+.hero-vignette{
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 28%,rgba(5,0,0,.75) 82%);
+  animation:vigPulse 8s ease-in-out infinite;
+}
+@keyframes vigPulse{0%,100%{opacity:1;}50%{opacity:.82;}}
+
+/* film reel */
+.reel-bar{position:absolute;top:0;width:28px;height:100%;display:flex;flex-direction:column;gap:6px;padding:4px 0;z-index:3;}
+.reel-bar.left{left:10px;animation:reelB 3s ease-in-out infinite;}
+.reel-bar.right{right:10px;animation:reelB 3s ease-in-out infinite 1.5s;}
+@keyframes reelB{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.reel-hole{width:18px;height:14px;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.25);border-radius:3px;align-self:center;flex-shrink:0;animation:holeP 2s ease-in-out infinite;}
+@keyframes holeP{0%,100%{opacity:.3;}50%{opacity:.65;}}
+
+/* all hero text z=5 so above canvas layers */
+.college-badge,.dept-badge,.nevixa-wrap,.year-tag,.tagline,.countdown-wrap,.event-info-bar,.reg-btn,.scroll-cue{position:relative;z-index:5;}
+
+.college-badge{font-size:clamp(11px,1.5vw,15px);letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;animation:fadeDown 1s ease both,shimTxt 3s ease-in-out infinite 2s;}
+@keyframes shimTxt{0%,100%{text-shadow:0 0 10px rgba(212,160,26,.5);}50%{text-shadow:0 0 22px rgba(212,160,26,.85),0 0 32px rgba(212,160,26,.4);}}
+.dept-badge{font-size:clamp(10px,1.2vw,13px);letter-spacing:3px;color:rgba(212,160,26,.75);text-transform:uppercase;margin-bottom:40px;animation:fadeDown 1.2s ease both;}
+
+/* NEVIXA title */
+.nevixa-wrap{margin-bottom:10px;perspective:1200px;}
+.nevixa-title{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(72px,16vw,200px);line-height:.85;color:transparent;
+  -webkit-text-stroke:2px var(--red);letter-spacing:-4px;position:relative;
+  animation:titleReveal 1.4s cubic-bezier(.16,1,.3,1) both .3s, glitch 3s infinite 4s;
+  text-shadow:0 0 80px rgba(192,57,43,.4);
+}
+.nevixa-title .fill{position:absolute;top:0;left:0;color:var(--red);-webkit-text-stroke:0;clip-path:inset(0 100% 0 0);animation:fillReveal 2s ease both 1s;pointer-events:none;}
+@keyframes fillReveal{to{clip-path:inset(0 0% 0 0);}}
+@keyframes glitch{
+  0%,88%,100%{text-shadow:0 0 80px rgba(192,57,43,.4);transform:none;}
+  90%{text-shadow:-4px 0 cyan,4px 0 red;transform:translate(-2px,0);}
+  92%{text-shadow:4px 0 cyan,-4px 0 red;transform:translate(2px,0);}
+  94%{text-shadow:-3px 0 magenta,3px 0 yellow;transform:translate(-1px,0);}
+  96%{text-shadow:0 0 80px rgba(192,57,43,.4);transform:none;}
+}
+.nevixa-title::before,.nevixa-title::after{content:'NEVIXA';position:absolute;top:0;left:0;width:100%;opacity:0;-webkit-text-stroke:0;mix-blend-mode:screen;}
+.nevixa-title::before{color:cyan;animation:gCyan 3s infinite 1s;}
+.nevixa-title::after{color:red;animation:gRed 3s infinite 1s;}
+@keyframes gCyan{0%,88%,100%{opacity:0;transform:translate(0,0);}90%,93%{opacity:.65;transform:translate(-3px,2px);}}
+@keyframes gRed{0%,88%,100%{opacity:0;transform:translate(0,0);}90%,93%{opacity:.65;transform:translate(3px,-2px);}}
+
+@keyframes titleReveal{from{opacity:0;transform:scaleX(.8) translateY(30px);}to{opacity:1;transform:scaleX(1) translateY(0);}}
+
+.year-tag{font-family:'Cinzel Decorative',serif;font-size:clamp(26px,5vw,58px);color:var(--gold);letter-spacing:8px;animation:fadeUp 1s ease both 1.2s,numFloat 6s ease-in-out infinite 2s;text-shadow:0 0 30px rgba(212,160,26,.6);}
+@keyframes numFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+.tagline{font-size:clamp(11px,1.8vw,17px);letter-spacing:6px;color:rgba(245,240,232,.5);text-transform:uppercase;margin:14px 0 38px;animation:fadeUp 1s ease both 1.4s,tagP 4s ease-in-out infinite 3s;}
+@keyframes tagP{0%,100%{opacity:.5;}50%{opacity:.82;}}
+
+/* countdown */
+.countdown-wrap{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:38px;animation:fadeUp 1s ease both 2s;}
+.count-block{text-align:center;min-width:68px;}
+.count-num{font-family:'Cinzel Decorative',serif;font-size:clamp(34px,6vw,58px);color:var(--red);line-height:1;display:block;animation:countP 2s ease-in-out infinite;}
+@keyframes countP{0%,100%{transform:scale(1);text-shadow:0 0 18px rgba(192,57,43,.4);}50%{transform:scale(1.08);text-shadow:0 0 38px rgba(192,57,43,.85);}}
+.count-label{font-size:11px;letter-spacing:3px;color:rgba(245,240,232,.4);text-transform:uppercase;}
+
+/* pills */
+.event-info-bar{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-bottom:46px;animation:fadeUp 1s ease both 1.6s;}
+.event-info-bar a{text-decoration:none;color:var(--white);}
+.info-pill{display:flex;align-items:center;gap:10px;padding:10px 22px;border:1px solid rgba(192,57,43,.4);background:rgba(192,57,43,.08);backdrop-filter:blur(6px);border-radius:2px;font-size:15px;letter-spacing:2px;color:var(--white);transition:all .4s cubic-bezier(.16,1,.3,1);animation:pillF 3s ease-in-out infinite;}
+.info-pill:nth-child(1){animation-delay:0s;}.info-pill:nth-child(2){animation-delay:.3s;}.info-pill:nth-child(3){animation-delay:.6s;}
+@keyframes pillF{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+.info-pill:hover{transform:translateY(-10px) scale(1.05);border-color:var(--red);background:rgba(192,57,43,.16);box-shadow:0 15px 40px rgba(192,57,43,.4);}
+.info-pill i{color:var(--red);font-size:16px;}
+
+.reg-btn{display:inline-block;padding:15px 48px;background:var(--red);color:var(--white);font-size:18px;letter-spacing:4px;text-decoration:none;text-transform:uppercase;border:2px solid var(--red);clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);transition:all .3s;animation:fadeUp 1s ease both 1.8s;}
+.reg-btn:hover{background:transparent;color:var(--red);letter-spacing:6px;}
+
+.scroll-cue{display:flex;flex-direction:column;align-items:center;gap:8px;animation:pillF 3s ease-in-out infinite;}
+.scroll-cue span{font-size:10px;letter-spacing:3px;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:14px 30px;display:flex;align-items:center;justify-content:space-between;background:rgba(10,0,0,.72);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid rgba(192,57,43,.15);transform:translateY(-100%);animation:navDown .6s ease forwards .3s;}
+nav.scrolled{background:rgba(10,0,0,.96);box-shadow:0 5px 30px rgba(0,0,0,.5);}
+@keyframes navDown{to{transform:translateY(0);}}
+.nav-brand{font-family:'Cinzel Decorative',serif;font-size:26px;letter-spacing:4px;color:var(--red);text-decoration:none;transition:all .3s;}
+.nav-brand:hover{letter-spacing:6px;text-shadow:0 0 20px rgba(192,57,43,.8);}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{font-size:13px;letter-spacing:3px;color:rgba(245,240,232,.6);text-decoration:none;text-transform:uppercase;transition:all .3s;position:relative;}
+.nav-links a::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--red),var(--gold));transition:width .3s;}
+.nav-links a:hover::after{width:100%;}
+.nav-links a:hover{color:var(--red);}
+.nav-toggle{display:none;background:none;border:none;color:var(--white);font-size:22px;cursor:pointer;transition:transform .3s;}
+.nav-toggle:hover{transform:scale(1.2) rotate(90deg);}
+
+/* ── SECTIONS ── */
+.section-wrap{padding:80px 20px;position:relative;}
+.section-title{font-family:'Cinzel Decorative',serif;font-size:clamp(34px,6vw,70px);letter-spacing:6px;color:var(--white);text-align:center;margin-bottom:8px;opacity:0;}
+.section-title span{color:var(--red);display:inline-block;animation:colShift 3s ease-in-out infinite;}
+@keyframes colShift{0%,100%{color:var(--red);}50%{color:var(--gold);}}
+.section-line{width:80px;height:3px;background:linear-gradient(90deg,transparent,var(--red),transparent);margin:0 auto 60px;}
+
+.ticker-wrap{background:var(--red);padding:10px 0;overflow:hidden;white-space:nowrap;position:relative;}
+.ticker-wrap::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shim 3s infinite;}
+@keyframes shim{0%{left:-100%;}100%{left:100%;}}
+.ticker-content{display:inline-block;animation:tick 22s linear infinite;font-size:13px;letter-spacing:4px;color:var(--white);}
+@keyframes tick{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}
+
+/* ── EVENTS ── */
+.events-section{background:linear-gradient(180deg,#0a0000 0%,#100000 50%,#0a0000 100%);}
+.events-container{max-width:1200px;margin:0 auto;}
+.events-category{margin-bottom:60px;}
+.cat-label{font-size:13px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:16px;}
+.cat-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(212,160,26,.4),transparent);}
+.events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;}
+
+.event-card{border:1px solid rgba(192,57,43,.25);background:rgba(10,0,0,.85);padding:28px 24px 64px;cursor:pointer;position:relative;overflow:hidden;transition:all .6s cubic-bezier(.16,1,.3,1);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));}
+.event-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,57,43,.12) 0%,transparent 60%);opacity:0;transition:opacity .4s;}
+.event-card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.1),transparent);transform:rotate(45deg);transition:left .6s;}
+.event-card:hover::after{left:100%;}
+.event-card:hover{border-color:var(--red);transform:translateY(-12px) scale(1.02);box-shadow:0 30px 80px rgba(192,57,43,.4),0 0 50px rgba(192,57,43,.2);}
+.event-card:hover::before{opacity:1;}
+.event-icon{font-size:28px;color:var(--red);margin-bottom:16px;display:block;transition:all .4s cubic-bezier(.16,1,.3,1);}
+.event-card:hover .event-icon{transform:scale(1.3) rotate(360deg);filter:drop-shadow(0 0 10px rgba(192,57,43,.8));}
+.event-name{font-family:'Cinzel Decorative',serif;font-size:20px;letter-spacing:2px;color:var(--white);margin-bottom:8px;transition:all .3s;}
+.event-card:hover .event-name{color:var(--gold);letter-spacing:3px;}
+.event-type-badge{display:inline-block;padding:3px 10px;font-size:11px;letter-spacing:2px;border:1px solid;margin-bottom:14px;transition:all .3s;}
+.tech-badge{border-color:var(--red);color:var(--red);}
+.nontech-badge{border-color:var(--gold);color:var(--gold);}
+.event-card:hover .event-type-badge{transform:scale(1.1);box-shadow:0 0 15px currentColor;}
+.event-preview{font-size:13px;color:rgba(245,240,232,.5);line-height:1.5;}
+.card-contact{position:absolute;bottom:0;left:0;right:0;padding:10px 18px;border-top:1px solid rgba(192,57,43,.15);background:rgba(192,57,43,.05);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--gold);letter-spacing:1px;}
+.card-contact i{color:var(--red);font-size:11px;flex-shrink:0;}
+.event-arrow{position:absolute;bottom:14px;right:18px;color:var(--red);font-size:16px;transition:all .4s;}
+.event-card:hover .event-arrow{transform:translateX(10px) scale(1.4);color:var(--gold);}
+
+/* fee banner */
+.fee-banner{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);padding:24px 40px;display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;text-align:center;margin:0 auto 60px;max-width:600px;animation:banFloat 4s ease-in-out infinite;}
+@keyframes banFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.fee-amount{font-family:'Cinzel Decorative',serif;font-size:52px;color:var(--gold);line-height:1;animation:gldGlow 2s ease-in-out infinite;}
+@keyframes gldGlow{0%,100%{text-shadow:0 0 20px rgba(212,160,26,.5);}50%{text-shadow:0 0 40px rgba(212,160,26,.85),0 0 60px rgba(212,160,26,.4);}}
+.fee-label{font-size:13px;letter-spacing:3px;color:rgba(245,240,232,.5);text-transform:uppercase;}
+
+/* coordinators */
+.coordinators-section{background:#080000;padding:80px 20px;}
+.coord-grid{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;}
+.coord-full-card{border:1px solid rgba(192,57,43,.2);padding:24px;background:rgba(10,0,0,.6);text-align:center;transition:all .4s cubic-bezier(.16,1,.3,1);}
+.coord-full-card:hover{border-color:var(--red);transform:translateY(-12px) scale(1.03);box-shadow:0 20px 50px rgba(192,57,43,.3);}
+.coord-full-card .avatar{width:56px;height:56px;background:rgba(192,57,43,.15);border:1px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:var(--red);transition:all .4s;}
+.coord-full-card:hover .avatar{transform:rotate(360deg) scale(1.2);box-shadow:0 0 30px rgba(192,57,43,.6);}
+.coord-full-card .name{font-size:18px;letter-spacing:2px;}
+.coord-full-card .phone{color:var(--gold);font-size:15px;margin-top:6px;}
+.coord-full-card .role-label{font-size:11px;letter-spacing:3px;color:rgba(245,240,232,.4);text-transform:uppercase;margin-top:4px;}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .4s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{max-width:700px;width:100%;background:#0f0000;border:1px solid rgba(192,57,43,.4);max-height:90vh;overflow-y:auto;clip-path:polygon(0 0,calc(100% - 24px) 0,100% 24px,100% 100%,24px 100%,0 calc(100% - 24px));transform:scale(.7) translateY(50px);transition:all .6s cubic-bezier(.16,1,.3,1);opacity:0;}
+.modal-overlay.open .modal-box{transform:scale(1) translateY(0);opacity:1;}
+.modal-header{padding:32px 32px 24px;border-bottom:1px solid rgba(192,57,43,.2);display:flex;justify-content:space-between;align-items:flex-start;}
+.modal-event-name{font-family:'Cinzel Decorative',serif;font-size:36px;letter-spacing:3px;color:var(--red);line-height:1;}
+.modal-close{background:none;border:1px solid rgba(192,57,43,.4);color:var(--white);width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;margin-top:4px;}
+.modal-close:hover{background:var(--red);transform:rotate(90deg);}
+.modal-body{padding:28px 32px 32px;}
+.modal-section-head{font-size:13px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;margin-top:24px;display:flex;align-items:center;gap:10px;}
+.modal-section-head::after{content:'';flex:1;height:1px;background:rgba(212,160,26,.2);}
+.detail-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:15px;color:var(--white);transition:all .3s;}
+.detail-row:hover{background:rgba(192,57,43,.05);padding-left:10px;}
+.detail-row i{color:var(--red);width:20px;text-align:center;}
+.coord-lead{background:rgba(212,160,26,.06);border:1px solid rgba(212,160,26,.3);padding:14px 18px;margin-bottom:10px;}
+.coord-staff{background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.35);padding:14px 18px;margin-top:12px;}
+.coord-role-label{font-size:11px;letter-spacing:3px;color:rgba(245,240,232,.4);margin-bottom:4px;text-transform:uppercase;}
+.coord-name{font-size:16px;letter-spacing:1px;color:var(--white);}
+.coord-phone{font-size:14px;color:var(--gold);margin-top:4px;}
+.team-members-wrap{margin:10px 0;}
+.team-label{font-size:11px;letter-spacing:3px;color:rgba(245,240,232,.35);margin-bottom:8px;text-transform:uppercase;}
+.team-chip{display:inline-block;padding:5px 14px;margin:4px;border:1px solid rgba(192,57,43,.2);background:rgba(192,57,43,.04);font-size:13px;color:rgba(245,240,232,.75);letter-spacing:1px;transition:all .3s;}
+.team-chip:hover{background:rgba(192,57,43,.15);transform:translateY(-2px);}
+.rules-list{list-style:none;}
+.rules-list li{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:14px;color:rgba(245,240,232,.7);display:flex;gap:10px;transition:all .3s;}
+.rules-list li:hover{background:rgba(192,57,43,.05);padding-left:10px;}
+.rules-list li::before{content:'▸';color:var(--red);flex-shrink:0;}
+.modal-reg-btn{display:block;width:100%;margin-top:28px;padding:14px;background:var(--red);color:var(--white);text-align:center;font-size:16px;letter-spacing:4px;text-decoration:none;text-transform:uppercase;border:2px solid var(--red);transition:all .4s;cursor:pointer;position:relative;overflow:hidden;}
+.modal-reg-btn:hover{background:transparent;color:var(--red);letter-spacing:6px;}
+
+/* footer */
+footer{padding:40px 20px;text-align:center;border-top:1px solid rgba(192,57,43,.15);font-size:13px;color:rgba(245,240,232,.3);letter-spacing:2px;}
+footer span{color:var(--red);}
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}}
+@media(max-width:768px){
+  .nav-links{display:none;flex-direction:column;gap:10px;}
+  .nav-links.show{display:flex;position:absolute;top:60px;left:0;right:0;background:rgba(10,0,0,.98);padding:20px 30px;border-bottom:1px solid rgba(192,57,43,.2);}
+  .nav-toggle{display:block;}
+  .modal-body,.modal-header{padding:20px;}
+  .modal-event-name{font-size:24px;}
+  .reel-bar{display:none;}
+  nav{position:relative;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#hero" class="nav-brand">NEVIXA</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#events">Events</a></li>
+    <li><a href="#coordinators">Coordinators</a></li>
+    <li><a href="https://forms.gle/nhLbPSa2kiPjEbQL7" target="_blank" style="color:var(--red)">Register</a></li>
+  </ul>
+  <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <!-- SAMURAI SCENE CANVAS — fills #hero behind all content -->
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="video-overlay"></div>
+  <div class="hero-lines"></div>
+  <div class="scanlines"></div>
+  <div class="hero-vignette"></div>
+  <div class="reel-bar left" id="reelLeft"></div>
+  <div class="reel-bar right" id="reelRight"></div>
+
+  <div class="college-badge">M.A.M. College of Engineering and Technology<br>&nbsp;&nbsp;Siruganur, Tiruchirappalli</div><br>
+  <div class="dept-badge">Department of Computer Science and Engineering</div>
+
+  <div class="nevixa-wrap">
+    <div class="nevixa-title" style="position:relative;">
+      NEVIXA
+      <span class="fill">NEVIXA</span>
+    </div>
+  </div>
+
+  <div class="year-tag">2 K 2 6</div>
+  <div class="tagline">The Symposium &nbsp;·&nbsp; Where Minds Ignite</div>
+
+  <div class="countdown-wrap">
+    <div class="count-block"><span class="count-num" id="cd-days">--</span><span class="count-label">Days</span></div>
+    <div class="count-block"><span class="count-num" id="cd-hrs">--</span><span class="count-label">Hours</span></div>
+    <div class="count-block"><span class="count-num" id="cd-min">--</span><span class="count-label">Mins</span></div>
+    <div class="count-block"><span class="count-num" id="cd-sec">--</span><span class="count-label">Secs</span></div>
+  </div>
+
+  <div class="event-info-bar">
+    <div class="info-pill"><i class="fas fa-calendar-alt"></i><a href="https://calendar.google.com/calendar/u/0/r/day/2026/3/28" target="_blank">28 March 2026</a></div>
+    <div class="info-pill"><i class="fas fa-map-marker-alt"></i><a href="https://maps.app.goo.gl/PM8LweUCF6Um4ohu7" target="_blank">Newton Hall</a></div>
+    <div class="info-pill"><i class="fas fa-ticket-alt"></i><a href="https://forms.gle/nhLbPSa2kiPjEbQL7" target="_blank">&#8377;200 Per Head</a></div>
+  </div>
+
+  <a href="https://forms.gle/nhLbPSa2kiPjEbQL7" target="_blank" class="reg-btn">Register Now</a>
+
+  <div class="scroll-cue" style="margin-top:24px;">
+    <i class="fas fa-chevron-down"></i>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <span class="ticker-content">
+    &nbsp;&nbsp;&nbsp;NEVIXA 2K26 &nbsp;&#11045;&nbsp; 28 MARCH &nbsp;&#11045;&nbsp; NEWTON HALL &nbsp;&#11045;&nbsp; &#8377;200 REGISTRATION &nbsp;&#11045;&nbsp;
+    PAPER PRESENTATION &nbsp;&#11045;&nbsp; CODE DEBUG &nbsp;&#11045;&nbsp; UI-UX &nbsp;&#11045;&nbsp; CRITICAL THINKING &nbsp;&#11045;&nbsp;
+    CODE CONNECT &nbsp;&#11045;&nbsp; SHORT FILM &nbsp;&#11045;&nbsp; QUIZ &nbsp;&#11045;&nbsp;
+    M.A.M. COLLEGE OF ENGINEERING AND TECHNOLOGY &nbsp;&#11045;&nbsp; CSE DEPARTMENT &nbsp;&#11045;&nbsp;
+  </span>
+</div>
+
+<!-- EVENTS -->
+<section class="events-section section-wrap" id="events">
+  <div class="section-title">The <span>Events</span></div>
+  <div class="section-line"></div>
+  <div class="events-container">
+    <div class="fee-banner">
+      <div>
+        <div class="fee-amount">&#8377;200</div>
+        <div class="fee-label">Registration Fee Per Head</div>
+      </div>
+      <div style="width:1px;height:60px;background:rgba(192,57,43,0.3);"></div>
+      <div>
+        <div style="font-size:13px;letter-spacing:3px;color:rgba(245,240,232,0.5);">Date</div>
+        <div style="font-family:'Cinzel Decorative',serif;font-size:26px;color:var(--white);letter-spacing:4px;">28 MARCH 2026</div>
+        <div style="font-size:13px;letter-spacing:3px;color:rgba(245,240,232,0.5);margin-top:4px;">Venue &middot; Newton Hall</div>
+      </div>
+    </div>
+    <div class="events-category">
+      <div class="cat-label"><i class="fas fa-microchip" style="color:var(--red);"></i> Technical Events</div>
+      <div class="events-grid" id="techGrid"></div>
+    </div>
+    <div class="events-category">
+      <div class="cat-label"><i class="fas fa-star" style="color:var(--gold);"></i> Non-Technical Events</div>
+      <div class="events-grid" id="nonTechGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- COORDINATORS -->
+<section class="coordinators-section" id="coordinators">
+  <div class="section-title">Student <span>Coordinators</span></div>
+  <div class="section-line"></div>
+  <div class="coord-grid">
+    <div class="coord-full-card"><div class="avatar"><i class="fas fa-user"></i></div><div class="name">Mujibur Rahman A</div><div class="role-label">Student Coordinator</div><div class="phone"><i class="fas fa-phone" style="margin-right:6px;font-size:12px;"></i>8220098271</div></div>
+    <div class="coord-full-card"><div class="avatar"><i class="fas fa-user"></i></div><div class="name">Gowtham V</div><div class="role-label">Student Coordinator</div><div class="phone"><i class="fas fa-phone" style="margin-right:6px;font-size:12px;"></i>9025539063</div></div>
+    <div class="coord-full-card"><div class="avatar"><i class="fas fa-user"></i></div><div class="name">Roshan B</div><div class="role-label">Student Coordinator</div><div class="phone"><i class="fas fa-phone" style="margin-right:6px;font-size:12px;"></i>7358004087</div></div>
+  </div>
+  <div class="section-title" style="margin-top:60px;">Staff <span>Coordinators</span></div>
+  <div class="section-line"></div>
+  <div class="coord-grid" style="max-width:600px;">
+    <div class="coord-full-card"><div class="avatar"><i class="fas fa-chalkboard-teacher"></i></div><div class="name">Mrs. Kavitha T</div><div class="role-label">AP / CSE &ndash; Staff Coordinator</div><div class="phone"><i class="fas fa-phone" style="margin-right:6px;font-size:12px;"></i>9976092558</div></div>
+    <div class="coord-full-card"><div class="avatar"><i class="fas fa-chalkboard-teacher"></i></div><div class="name">Mrs. Mary P</div><div class="role-label">AP / CSE &ndash; Staff Coordinator</div><div class="phone"><i class="fas fa-phone" style="margin-right:6px;font-size:12px;"></i>9486306901</div></div>
+  </div>
+</section>
+
+<footer>
+  <div style="font-family:'Cinzel Decorative',serif;font-size:30px;letter-spacing:8px;color:var(--red);margin-bottom:12px;">NEVIXA 2026</div>
+  <div>M.A.M. College of Engineering and Technology &nbsp;&middot;&nbsp; Siruganur, Tiruchirappalli &ndash; 621105</div>
+  <div style="margin-top:8px;">Department of <span>Computer Science and Engineering</span></div>
+  <div style="margin-top:16px;opacity:0.3;">&copy; 2026 MAMCET CSE Dept. All Rights Reserved.</div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div id="modalEventName" class="modal-event-name"></div>
+        <div id="modalEventBadge" class="event-type-badge" style="margin-top:8px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-head"><i class="fas fa-info-circle" style="color:var(--red);"></i> Event Details</div>
+      <div class="detail-row"><i class="fas fa-calendar-alt"></i><span>28 March 2026</span></div>
+      <div class="detail-row"><i class="fas fa-map-marker-alt"></i><span id="modalVenue"></span></div>
+      <div class="detail-row"><i class="fas fa-clock"></i><span id="modalTime"></span></div>
+      <div class="detail-row"><i class="fas fa-ticket-alt"></i><span>&#8377;200 per head registration</span></div>
+      <div class="modal-section-head"><i class="fas fa-align-left" style="color:var(--red);"></i> About</div>
+      <p id="modalDesc" style="font-size:15px;color:rgba(245,240,232,0.7);line-height:1.7;"></p>
+      <div class="modal-section-head"><i class="fas fa-users" style="color:var(--red);"></i> Event Coordinators</div>
+      <div id="modalCoords"></div>
+      <div class="modal-section-head"><i class="fas fa-list-ul" style="color:var(--red);"></i> Rules</div>
+      <ul class="rules-list" id="modalRules"></ul>
+      <a href="https://forms.gle/nhLbPSa2kiPjEbQL7" target="_blank" class="modal-reg-btn">Register for This Event</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// SAMURAI BACKGROUND — pure canvas, zero external assets
+// ════════════════════════════════════════════════════
+(function(){
+  var C = document.getElementById('bgCanvas');
+  var X = C.getContext('2d');
+
+  function resize(){
+    C.width  = C.parentElement.offsetWidth  || window.innerWidth;
+    C.height = C.parentElement.offsetHeight || window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', function(){ resize(); makeStars(); });
+
+  // helpers
+  var W = function(){ return C.width;  };
+  var H = function(){ return C.height; };
+
+  /* ─── STARS ─── */
+  var stars = [];
+  function makeStars(){
+    stars = [];
+    var n = Math.floor(W()*H()/4500);
+    for(var i=0;i<n;i++){
+      stars.push({ x:Math.random()*W(), y:Math.random()*H()*.70,
+        r:Math.random()*1.1+.2, a:Math.random(),
+        da:(Math.random()*.006+.001)*(Math.random()<.5?1:-1) });
+    }
+  }
+  makeStars();
+
+  function drawStars(){
+    for(var i=0;i<stars.length;i++){
+      var s=stars[i];
+      s.a+=s.da;
+      if(s.a>1) s.da=-Math.abs(s.da);
+      if(s.a<0) s.da= Math.abs(s.da);
+      X.beginPath(); X.arc(s.x,s.y,s.r,0,Math.PI*2);
+      X.fillStyle='rgba(245,230,200,'+( s.a*.55 )+')'; X.fill();
+    }
+  }
+
+  /* ─── MOON ─── */
+  function drawMoon(t){
+    var mx=W()*.72, my=H()*.22, mr=Math.min(W(),H())*.065;
+    // halos
+    for(var i=4;i>=0;i--){
+      var p=.5+.5*Math.sin(t*.0008+i*.6);
+      var g=X.createRadialGradient(mx,my,mr,mx,my,mr*(2.5+i*1.3));
+      g.addColorStop(0,'rgba(160,25,10,'+(.10*p)+')');
+      g.addColorStop(1,'rgba(160,25,10,0)');
+      X.beginPath(); X.arc(mx,my,mr*(2.5+i*1.3),0,Math.PI*2);
+      X.fillStyle=g; X.fill();
+    }
+    // body gradient
+    var g2=X.createRadialGradient(mx-mr*.25,my-mr*.25,mr*.08,mx,my,mr);
+    g2.addColorStop(0,'#c8361a'); g2.addColorStop(.55,'#861508'); g2.addColorStop(1,'#3a0000');
+    X.beginPath(); X.arc(mx,my,mr,0,Math.PI*2); X.fillStyle=g2; X.fill();
+    // craters
+    var craters=[[.28,.22,.11],[-.22,.30,.07],[.08,-.28,.05]];
+    for(var c=0;c<craters.length;c++){
+      X.beginPath(); X.arc(mx+craters[c][0]*mr, my+craters[c][1]*mr, craters[c][2]*mr, 0, Math.PI*2);
+      X.fillStyle='rgba(0,0,0,.28)'; X.fill();
+    }
+  }
+
+  /* ─── MOUNTAINS ─── */
+  function drawMountains(){
+    var hor=H()*.65;
+    var layers=[
+      { col:'rgba(12,2,2,.96)', pts:[0,.92, .08,.70, .18,.55, .28,.68, .38,.50, .50,.62, .60,.48, .72,.60, .82,.52, .92,.66, 1,.80, 1.02,.92] },
+      { col:'rgba(8,1,1,.82)',  pts:[0,.96, .12,.76, .25,.65, .40,.75, .52,.68, .65,.74, .78,.62, .90,.76, 1.02,.90] },
+      { col:'rgba(5,0,0,.65)',  pts:[0,.98, .18,.84, .36,.78, .54,.82, .72,.78, .90,.84, 1.02,.96] }
+    ];
+    for(var l=0;l<layers.length;l++){
+      var lay=layers[l], p=lay.pts;
+      X.beginPath(); X.moveTo(0,H());
+      for(var i=0;i<p.length;i+=2){
+        var px=W()*p[i];
+        var py=hor+(H()-hor)*(p[i+1]-.65)/.35;
+        if(i===0){ X.lineTo(px,py); }
+        else{
+          var ppx=W()*p[i-2];
+          var ppy=hor+(H()-hor)*(p[i-1]-.65)/.35;
+          X.quadraticCurveTo((ppx+px)/2, Math.min(ppy,py)-18, px, py);
+        }
+      }
+      X.lineTo(W(),H()); X.closePath();
+      X.fillStyle=lay.col; X.fill();
+    }
+  }
+
+  /* ─── HORIZON GLOW ─── */
+  function drawHorizon(t){
+    var hor=H()*.65, p=.5+.5*Math.sin(t*.0007);
+    var g=X.createLinearGradient(0,hor-70,0,hor+30);
+    g.addColorStop(0,'rgba(180,40,10,0)');
+    g.addColorStop(.5,'rgba(210,65,20,'+(.32*p)+')');
+    g.addColorStop(1,'rgba(100,18,5,0)');
+    X.fillStyle=g; X.fillRect(0,hor-70,W(),100);
+  }
+
+  /* ─── 3D GRID ─── */
+  function drawGrid(t){
+    var hor=H()*.65, dep=H()-hor;
+    X.save(); X.beginPath(); X.rect(0,hor,W(),H()-hor); X.clip();
+    for(var i=0;i<=14;i++){
+      var pct=i/14, y=hor+dep*(pct*pct), a=(1-pct)*.15;
+      X.beginPath(); X.moveTo(0,y); X.lineTo(W(),y);
+      X.strokeStyle='rgba(210,75,25,'+a+')'; X.lineWidth=.7; X.stroke();
+    }
+    var cx=W()/2, sp=W()*2.4;
+    for(var j=0;j<=22;j++){
+      var pct2=j/22, xb=cx-sp/2+sp*pct2, a2=.12-Math.abs(pct2-.5)*.2;
+      X.beginPath(); X.moveTo(cx,hor); X.lineTo(xb,H()+20);
+      X.strokeStyle='rgba(210,75,25,'+Math.max(0,a2)+')'; X.lineWidth=.7; X.stroke();
+    }
+    var pp=((t*.00035)%1), py=hor+dep*(pp*pp);
+    var pg=X.createLinearGradient(0,py-10,0,py+10);
+    pg.addColorStop(0,'rgba(255,100,40,0)'); pg.addColorStop(.5,'rgba(255,100,40,.22)'); pg.addColorStop(1,'rgba(255,100,40,0)');
+    X.fillStyle=pg; X.fillRect(0,py-10,W(),20);
+    X.restore();
+  }
+
+  /* ─── TORII GATE ─── */
+  function drawTorii(t){
+    var hor=H()*.65, cx=W()*.5;
+    var sway=Math.sin(t*.0004)*2.5;
+    var gw=Math.min(W(),750)*.32, gh=gw*1.08;
+    var bx1=cx-gw/2+sway, bx2=cx+gw/2+sway;
+    var topY=hor-gh, pw=gw*.055;
+    var tc='rgba(130,18,8,.6)', td='rgba(55,5,5,.75)';
+    // pillars
+    X.fillStyle=tc;
+    X.fillRect(bx1, topY*.98, pw, hor-topY*.98);
+    X.fillRect(bx2-pw, topY*.98, pw, hor-topY*.98);
+    // curved top beam (kasagi)
+    var kh=gh*.065;
+    X.fillStyle=tc;
+    X.beginPath();
+    X.moveTo(bx1-gw*.09, topY+kh);
+    X.quadraticCurveTo(cx+sway, topY-kh*.9, bx2+gw*.09, topY+kh);
+    X.lineTo(bx2+gw*.09, topY+kh*2.3);
+    X.quadraticCurveTo(cx+sway, topY+kh*1.6, bx1-gw*.09, topY+kh*2.3);
+    X.closePath(); X.fill();
+    // lower crossbeam (nuki)
+    X.fillStyle=td;
+    X.fillRect(bx1-gw*.01, topY+gh*.18, gw*1.02, kh*1.25);
+    // shimagi
+    X.fillStyle=td;
+    X.fillRect(bx1+pw*.5, topY+kh*2.4, gw-pw, kh*.75);
+    // glow outline
+    var glowA=.12+.06*Math.sin(t*.001);
+    X.strokeStyle='rgba(220,100,40,'+glowA+')';
+    X.lineWidth=1.2;
+    X.strokeRect(bx1-gw*.1, topY-kh, gw*1.2, gh*1.1);
+  }
+
+  /* ─── SAMURAI ─── */
+  var sD=0, sDr=1, sTmr=0, iSway=0;
+
+  function drawSamurai(t){
+    var hor=H()*.65, cx=W()*.5;
+    var sc=Math.min(W(),H())*.0018;
+    iSway+=.007; sTmr+=.016;
+    if(sTmr>5   && sDr===1  && sD<1){ sD=Math.min(1,sD+.013); if(sD>=1){sDr=-1;sTmr=0;} }
+    if(sTmr>2.5 && sDr===-1 && sD>0){ sD=Math.max(0,sD-.009); if(sD<=0){sDr=1;sTmr=0;} }
+    var sw=Math.sin(iSway)*1.8*sc, A=sD;
+
+    X.save(); X.translate(cx+sw, hor); X.scale(sc,sc);
+    var sil='rgba(10,1,1,.94)';
+    var rimA=.28+.18*Math.sin(t*.002);
+    var rim='rgba(195,75,25,'+rimA+')';
+
+    function P(pts,col){
+      X.beginPath(); X.moveTo(pts[0],pts[1]);
+      for(var k=2;k<pts.length;k+=2) X.lineTo(pts[k],pts[k+1]);
+      X.closePath(); X.fillStyle=col; X.fill();
+    }
+
+    // legs
+    P([-20,0,-32,-128,-10,-122,-5,0],sil);
+    P([5,0,10,-122,28,-128,20,0],sil);
+    // kimono body
+    P([-40,-128,-44,-278,44,-278,40,-128],sil);
+    // haori flare
+    P([-40,-128,-64,-80,64,-80,40,-128],sil);
+
+    // right arm (raises with sword)
+    X.save(); X.translate(40,-235); X.rotate(A*-.75);
+    P([0,0,9,0,15,92,2,92],sil);
+
+    // SWORD
+    X.save(); X.rotate(-.28-A*.85);
+    var sL=175+A*42, sx=13, sy=88;
+    var bg=X.createLinearGradient(sx,sy,sx,sy+sL);
+    bg.addColorStop(0,'rgba(255,228,145,'+(.35+A*.55)+')');
+    bg.addColorStop(.35,'rgba(195,175,115,'+(.28+A*.42)+')');
+    bg.addColorStop(1,'rgba(75,55,35,'+(.18+A*.28)+')');
+    X.beginPath(); X.moveTo(sx,sy); X.lineTo(sx+2.8,sy+sL); X.lineTo(sx-1.8,sy+sL); X.lineTo(sx-3.2,sy); X.closePath();
+    X.fillStyle=bg; X.fill();
+    if(A>.25){
+      X.beginPath(); X.moveTo(sx+.8,sy+18); X.lineTo(sx+1.2,sy+sL*.82);
+      X.lineWidth=.7; X.strokeStyle='rgba(255,238,175,'+((A-.25)*1.4)+')'; X.stroke();
+    }
+    // tsuba guard
+    X.beginPath(); X.ellipse(sx-.5,sy+6,8,4.5,.3,0,Math.PI*2);
+    X.fillStyle='rgba(155,125,55,.85)'; X.fill();
+    X.restore(); // sword
+
+    X.restore(); // right arm
+
+    // left arm
+    X.save(); X.translate(-40,-228); X.rotate(.22-A*.2);
+    P([0,0,-9,0,-13,88,0,88],sil); X.restore();
+
+    // neck
+    P([-9,-278,9,-278,8,-318,-8,-318],sil);
+
+    // kabuto dome
+    X.beginPath(); X.arc(0,-342,42,Math.PI,0); X.lineTo(42,-312); X.lineTo(-42,-312); X.closePath();
+    X.fillStyle=sil; X.fill();
+
+    // maedate crest
+    X.beginPath(); X.arc(0,-384,24,Math.PI*1.08,Math.PI*1.92);
+    X.lineWidth=7; X.strokeStyle=sil; X.stroke();
+
+    // shikoro neck guard
+    P([-42,-312,-58,-288,-28,-283,-20,-312],sil);
+    P([42,-312,58,-288,28,-283,20,-312],sil);
+
+    // mengu face plate
+    P([-22,-312,22,-312,20,-278,-20,-278],sil);
+
+    // eye glow
+    var ep=.38+.28*Math.sin(t*.003);
+    X.fillStyle='rgba(220,75,25,'+ep+')';
+    X.fillRect(-15,-302,11,5); X.fillRect(4,-302,11,5);
+
+    // rim aura
+    X.shadowBlur=22; X.shadowColor=rim;
+    X.strokeStyle=rim; X.lineWidth=1.2;
+    X.beginPath(); X.rect(-44,-395,88,395); X.stroke();
+    X.shadowBlur=0;
+
+    X.restore(); // samurai
+  }
+
+  /* ─── SWORD FLASH ─── */
+  function drawFlash(t){
+    if(sD<.45) return;
+    var hor=H()*.65;
+    var sc2=Math.min(W(),H())*.0018;
+    var cx=W()*.5+35*sc2;
+    var cy=hor-sc2*205;
+    var f=(sD-.45)*1.82;
+    for(var i=0;i<3;i++){
+      var r=42+i*28+Math.sin(t*.005+i)*9;
+      var g=X.createRadialGradient(cx,cy,0,cx,cy,r*f);
+      g.addColorStop(0,'rgba(255,215,90,0)');
+      g.addColorStop(.65,'rgba(255,175,55,'+(.22*f)+')');
+      g.addColorStop(1,'rgba(255,75,18,0)');
+      X.beginPath(); X.arc(cx,cy,r*f,0,Math.PI*2); X.fillStyle=g; X.fill();
+    }
+  }
+
+  /* ─── CHERRY BLOSSOMS ─── */
+  var blossoms=[];
+  function spawnB(){
+    return{x:Math.random()*W()*1.2-W()*.1,y:-20,vx:(Math.random()-.5)*1.1,vy:Math.random()*.75+.28,
+      rot:Math.random()*Math.PI*2,dr:(Math.random()-.5)*.055,r:Math.random()*5+3,a:Math.random()*.55+.18,w:Math.random()*Math.PI*2};
+  }
+  for(var bi=0;bi<32;bi++){ var bb=spawnB(); bb.y=Math.random()*H(); blossoms.push(bb); }
+
+  function drawBlossoms(){
+    for(var i=0;i<blossoms.length;i++){
+      var b=blossoms[i];
+      b.w+=.028; b.x+=b.vx+Math.sin(b.w)*.38; b.y+=b.vy; b.rot+=b.dr;
+      if(b.y>H()+25||b.x<-35||b.x>W()+35){ blossoms[i]=spawnB(); continue; }
+      X.save(); X.translate(b.x,b.y); X.rotate(b.rot); X.globalAlpha=b.a;
+      for(var p=0;p<5;p++){
+        X.save(); X.rotate(p*Math.PI*2/5);
+        X.beginPath(); X.ellipse(0,-b.r*.6,b.r*.34,b.r*.62,0,0,Math.PI*2);
+        X.fillStyle='rgba(215,115,125,1)'; X.fill(); X.restore();
+      }
+      X.beginPath(); X.arc(0,0,b.r*.17,0,Math.PI*2);
+      X.fillStyle='rgba(255,195,200,.85)'; X.fill();
+      X.globalAlpha=1; X.restore();
+    }
+  }
+
+  /* ─── EMBERS ─── */
+  var embers=[];
+  function spawnE(){
+    return{x:Math.random()*W(),y:H()+10,vx:(Math.random()-.5)*.7,vy:-(Math.random()*1.4+.4),
+      life:1,decay:Math.random()*.004+.002,r:Math.random()*2.2+.5,hot:Math.random()<.35};
+  }
+  for(var ei=0;ei<55;ei++){ var ee=spawnE(); ee.y=Math.random()*H(); embers.push(ee); }
+
+  function drawEmbers(){
+    for(var i=0;i<embers.length;i++){
+      var e=embers[i];
+      e.x+=e.vx+Math.sin(e.y*.018)*.28; e.y+=e.vy; e.life-=e.decay;
+      if(e.life<=0||e.y<-12){ embers[i]=spawnE(); continue; }
+      X.beginPath(); X.arc(e.x,e.y,e.r,0,Math.PI*2);
+      X.fillStyle=e.hot?'rgba(255,195,45,'+( e.life*.88 )+')':'rgba(218,75,25,'+( e.life*.55 )+')';
+      if(e.hot){ X.shadowBlur=7; X.shadowColor='#ffaa00'; }
+      X.fill(); X.shadowBlur=0;
+    }
+  }
+
+  /* ─── KANJI ─── */
+  var KJ=['刀','侍','武','道','剣','魂','炎','龍','鬼','力'];
+  var kparts=[];
+  function spawnK(){
+    return{c:KJ[Math.floor(Math.random()*KJ.length)],x:Math.random()*W(),y:H()+28,
+      vy:-(Math.random()*.35+.1),life:1,decay:Math.random()*.0018+.001,
+      sz:Math.random()*22+11,dx:(Math.random()-.5)*.28};
+  }
+  for(var ki=0;ki<8;ki++){ var kk=spawnK(); kk.y=Math.random()*H(); kparts.push(kk); }
+
+  function drawKanji(){
+    for(var i=0;i<kparts.length;i++){
+      var k=kparts[i];
+      k.y+=k.vy; k.x+=k.dx; k.life-=k.decay;
+      if(k.life<=0||k.y<-45){ kparts[i]=spawnK(); continue; }
+      X.save(); X.font=k.sz+'px serif';
+      X.fillStyle='rgba(175,48,18,'+( k.life*.32 )+')';
+      X.fillText(k.c,k.x,k.y); X.restore();
+    }
+  }
+
+  /* ─── RENDER LOOP ─── */
+  var running=true;
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden && !running){ running=true; requestAnimationFrame(frame); }
+    else running=!document.hidden;
+  });
+
+  function frame(t){
+    if(!running){ return; }
+    var cw=W(), ch=H();
+
+    // sky
+    var sky=X.createLinearGradient(0,0,0,ch*.65);
+    sky.addColorStop(0,'#040000'); sky.addColorStop(.5,'#0b0101'); sky.addColorStop(1,'#180404');
+    X.fillStyle=sky; X.fillRect(0,0,cw,ch);
+    // ground
+    X.fillStyle='#030000'; X.fillRect(0,ch*.65,cw,ch*.35);
+
+    drawStars();
+    drawMoon(t);
+    drawMountains();
+    drawHorizon(t);
+    drawGrid(t);
+    drawTorii(t);
+    drawSamurai(t);
+    drawFlash(t);
+    drawBlossoms();
+    drawEmbers();
+    drawKanji();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+})(); // end IIFE
+
+
+// ══════════════════════════════════════════
+// SITE LOGIC
+// ══════════════════════════════════════════
+var events = [
+  {id:'paperpre',name:'Paper Presentation',type:'Technical',icon:'fas fa-file-alt',
+   preview:'Present your research & innovations to a panel of experts.',
+   desc:'Paper Presentation is the flagship event where students showcase their research and technical innovations.',
+   venue:'Newton Hall - MAMCET',time:'11:15 AM - 01:15 PM',
+   lead:{name:'Roshan B',phone:'7358004087'},
+   team:['Niranjan M','Swetha K','Hema T','Kirthika V'],
+   staff:{name:'Mrs. Kavitha T',phone:'9486306901'},
+   rules:['Team size: 1-4 members.','Presentation: 8 min + 2 min Q&A.',
+     'Topics: 1. Generative AI in Education  2. AI-Driven Cybersecurity  3. Quantum AI.',
+     'Soft copy (PPT/PDF) submitted 1 day before.','Bring 1 printed copy on the day.']},
+  {id:'codedebug',name:'Code Debug',type:'Technical',icon:'fas fa-bug',
+   preview:'Debug and fix code in record time. Battle against the clock!',
+   desc:'Participants identify and fix bugs in pre-written programs across multiple languages. Speed and accuracy are key.',
+   venue:'CSE LAB 1 - MAMCET',time:'11:15 AM - 01:15 PM',
+   lead:{name:'Selvamani M',phone:'7539905792'},
+   team:['Poorvija Dhanusri D','Kavisri A','Ashok K','Keerthiga B'],
+   staff:{name:'Mr. Shanmugam R',phone:'9976092558'},
+   rules:['Individual participation.','Languages: C, Java, Python.',
+     'Round 1: MCQ Debugging (15 min). Round 2: Fix code (30 min).','No internet/phones during rounds.']},
+  {id:'uiux',name:'UI-UX',type:'Technical',icon:'fas fa-paint-brush',
+   preview:'Design, build, and showcase creative UI/UX interfaces.',
+   desc:'UI-UX challenges participants to showcase design thinking through mockups and web interfaces.',
+   venue:'CSE LAB 2 - MAMCET',time:'11:15 AM - 01:15 PM',
+   lead:{name:'Rahman Sharif M',phone:'8838638700'},
+   team:['Sanjay R','Rizwana R','Janani T','Gopika K'],
+   staff:{name:'Ms. Vidarshana',phone:'9976092558'},
+   rules:['Individual participation.','Tool: Figma only (provided PCs).',
+     'Theme announced 10 min before start.','Rounds: 30 min / 10 min / 45 min.','No plagiarised content.']},
+  {id:'criticalthink',name:'Critical Think',type:'Technical',icon:'fas fa-lightbulb',
+   preview:'Challenge your analytical mind. Think fast, think sharp!',
+   desc:'Tests logical reasoning, problem-solving and analytical thinking through puzzles and case studies.',
+   venue:'Charles Correa Hall - MAMCET',time:'11:15 AM - 01:15 PM',
+   lead:{name:'Gowtham V',phone:'9025539063'},
+   team:['Jeevika V'],
+   staff:{name:'Mrs. Sindhuja R',phone:'9486306901'},
+   rules:['Team size: 3-4 members.','Round 1: Problem Solving (5-7 min). Round 2: Prototype Creation.','Report 10 min before the event.']},
+  {id:'codeconnect',name:'Code Connect',type:'Non-Technical',icon:'fas fa-theater-masks',
+   preview:'Connect, collaborate and communicate through code-themed fun!',
+   desc:'Creative tech-themed activities and team challenges testing communication and teamwork.',
+   venue:'CSE LAB 1 - MAMCET',time:'02:00 PM - 03:30 PM',
+   lead:{name:'Mujibur Rahman M',phone:'8220098271'},
+   team:['Priyadharshini P','Ramya R','Agnisri M','Abirami C'],
+   staff:{name:'Mr. Shanmugam R',phone:'9976092558'},
+   rules:['Team size: 2-3 members.','No mobile phones.','Follow time limit and maintain silence.']},
+  {id:'shortfilm',name:'Short Film',type:'Non-Technical',icon:'fas fa-film',
+   preview:'Lights, camera, action! Showcase your cinematic talent.',
+   desc:'Teams create and present short films. Show your creativity, direction and storytelling skills.',
+   venue:'Newton Hall - MAMCET',time:'02:00 PM - 03:30 PM',
+   lead:{name:'SanthaKumar V',phone:'6384708642'},
+   team:['Mohammed Musharaff S','Subiksha S','Korak B','Joyal I','Agnel Beula J'],
+   staff:{name:'Mrs. Sindhuja R',phone:'9486306901'},
+   rules:['Team size: 1-4 members.','Duration: 3-5 minutes.',
+     'Any theme with a message.','Online: upload G Drive before event. Offline: pendrive on spot.','File < 1 GB. No offensive content.']},
+  {id:'quiz',name:'Quiz',type:'Non-Technical',icon:'fas fa-question-circle',
+   preview:'Test your knowledge across tech, general & pop culture!',
+   desc:'Multi-domain quiz: technology, general knowledge, current affairs and pop culture.',
+   venue:'CSE LAB 2 - MAMCET',time:'02:00 PM - 03:30 PM',
+   lead:{name:'Atshay Varsenth M',phone:'9080933681'},
+   team:['Kansiya K','Jenatneka G','Anusiya A','Sowmiya B'],
+   staff:{name:'Ms. Vidarshana',phone:'9976092558'},
+   rules:['Individual participation.','Use mobile to scan QR and attend quiz.',
+     'Round 1: 20 min. Round 2: 30 min.','Top 10 from Round 1 advance.']}
+];
+
+function buildCards(){
+  events.forEach(function(ev){
+    var isTech = ev.type === 'Technical';
+    var card = document.createElement('div');
+    card.className = 'event-card';
+    card.innerHTML =
+      '<i class="'+ev.icon+' event-icon"></i>'+
+      '<div class="event-name">'+ev.name+'</div>'+
+      '<span class="event-type-badge '+(isTech?'tech-badge':'nontech-badge')+'">'+ev.type+'</span>'+
+      '<p class="event-preview">'+ev.preview+'</p>'+
+      '<div class="card-contact"><i class="fas fa-phone"></i><span>'+ev.lead.name+' &nbsp;&middot;&nbsp; '+ev.lead.phone+'</span></div>'+
+      '<i class="fas fa-arrow-right event-arrow"></i>';
+    (function(id){ card.addEventListener('click', function(){ openModal(id); }); })(ev.id);
+    document.getElementById(isTech?'techGrid':'nonTechGrid').appendChild(card);
+  });
+}
+
+function openModal(id){
+  var ev = null;
+  for(var i=0;i<events.length;i++) if(events[i].id===id){ ev=events[i]; break; }
+  if(!ev) return;
+  var isTech = ev.type === 'Technical';
+  document.getElementById('modalEventName').textContent = ev.name;
+  var b = document.getElementById('modalEventBadge');
+  b.textContent = ev.type; b.className = 'event-type-badge '+(isTech?'tech-badge':'nontech-badge');
+  document.getElementById('modalVenue').textContent = ev.venue;
+  document.getElementById('modalTime').textContent  = ev.time;
+  document.getElementById('modalDesc').textContent  = ev.desc;
+  var teamHtml = ev.team.length ? '<div class="team-members-wrap"><div class="team-label">Team Members</div>'+ev.team.map(function(n){return '<span class="team-chip">'+n+'</span>';}).join('')+'</div>' : '';
+  document.getElementById('modalCoords').innerHTML =
+    '<div class="coord-lead"><div class="coord-role-label" style="color:var(--gold);">Lead Student Coordinator</div>'+
+    '<div class="coord-name">'+ev.lead.name+'</div>'+
+    '<div class="coord-phone"><i class="fas fa-phone" style="margin-right:6px;font-size:11px;"></i>'+ev.lead.phone+'</div></div>'+
+    teamHtml+
+    '<div class="coord-staff"><div class="coord-role-label" style="color:var(--red);">Staff Coordinator</div>'+
+    '<div class="coord-name">'+ev.staff.name+'</div>'+
+    '<div class="coord-phone"><i class="fas fa-phone" style="margin-right:6px;font-size:11px;"></i>'+ev.staff.phone+'</div></div>';
+  document.getElementById('modalRules').innerHTML = ev.rules.map(function(r){ return '<li>'+r+'</li>'; }).join('');
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+function updateCountdown(){
+  var diff = new Date('2026-03-28T09:00:00') - new Date();
+  if(diff<=0){
+    ['cd-days','cd-hrs','cd-min','cd-sec'].forEach(function(id){ document.getElementById(id).textContent='00'; });
+    return;
+  }
+  document.getElementById('cd-days').textContent = String(Math.floor(diff/86400000)).padStart(2,'0');
+  document.getElementById('cd-hrs').textContent  = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+  document.getElementById('cd-min').textContent  = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cd-sec').textContent  = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+}
+setInterval(updateCountdown,1000); updateCountdown();
+
+['reelLeft','reelRight'].forEach(function(id){
+  var bar=document.getElementById(id), frag=document.createDocumentFragment();
+  for(var i=0;i<60;i++){ var h=document.createElement('div'); h.className='reel-hole'; frag.appendChild(h); }
+  bar.appendChild(frag);
+});
+
+document.getElementById('navToggle').addEventListener('click', function(){
+  document.getElementById('navLinks').classList.toggle('show');
+});
+window.addEventListener('scroll', function(){
+  document.getElementById('navbar').classList.toggle('scrolled', window.pageYOffset>100);
+}, {passive:true});
+
+var obs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+      obs.unobserve(e.target);
+    }
+  });
+},{threshold:.1});
+document.querySelectorAll('.event-card,.coord-full-card,.section-title').forEach(function(el){
+  el.style.opacity='0'; el.style.transform='translateY(30px)';
+  el.style.transition='opacity .6s ease,transform .6s ease';
+  obs.observe(el);
+});
+
+buildCards();
+</script>
+</body>
+</html>
